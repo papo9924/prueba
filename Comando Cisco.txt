@@ -1,0 +1,141 @@
+CONFIGURACIÓN DE ROUTER
+
+//CONFIGURAR CONEXIÓN ROUTER<->SWITCH
+Router>enable
+Router#configure terminal
+Router(config)#interface gigabitEthernet 0/1.200   //CREA SUBINTERFACE 200  
+Router(config-subif)#encapsulation dot1Q 200	   //ENCAPSULACIÓN 802.1Q
+Router(config-subif)#ip address 192.168.200.1 255.255.255.0
+Router(config-subif)#exit
+
+//CONFIGURAR INTERFACE GIGABYTE CON CONEXIÓN A SWITCH (ENCENDER INTERFACE)
+Router(config)#interface gigabitEthernet 0/1
+Router(config-if)#no shutdown
+Router(config-if)#exit
+
+//CONFIGURAR INTERFACE ROUTER<->ROUTER
+Router(config)#interface gigabitEthernet 0/0
+Router(config-if)#no shutdown				//PRENDER INTERFACE.
+Router(config-if)#ip address 172.16.100.2 255.255.0.0
+Router(config-if)#exit
+
+//CREACIÓN DE LA RUTA COMPLETA.
+			//RED DE DESTINO (192.168.100)  //SIGUIENTE PUNTO DE ACCESO (ROUTER)
+Router(config)#ip route 192.168.100.0 255.255.255.0 172.16.100.1
+
+//VER CONFIGURACIÓN DE LAS INTERFACES
+Router#show ip interface brief
+
+//HABILITR CONSOLA PARA ROUTER DESDE COMUTADORA.
+Router(config)#username cisco privilege 3 password cisco
+Router(config)#line console 0
+Router(config-line)#login local
+Router(config-line)#end
+
+
+CONFIGURACIÓN DE SWITCH
+
+//CONFIGURACIÓN INTERFACE SWITCH<->ROUTE
+Switch>enable
+Switch#configure terminal 
+Switch(config)#interface fastEthernet 0/1
+Switch(config-if)#switchport mode trunk
+Switch(config-if)#exit
+
+//CREAR VLAN 200
+Switch(config)#vlan 200
+Switch(config-vlan)#name sistemas
+Switch(config-vlan)#exit
+
+//CONFIGURAR INTERFACE VLAN 200
+Switch(config)#interface vlan 200
+Switch(config-if)#ip address 192.168.200.2 255.255.255.0
+Switch(config-if)#no shutdown
+Switch(config-if)#exit
+
+//CONFIGURAR INTERFACE ETHERNET CON VLAN 200
+Switch(config)#interface fastEthernet 0/2
+Switch(config-if)#switchport mode access
+Switch(config-if)#switchport access vlan 200
+Switch(config-if)#exit
+
+//CONFIGURAR DEFAULT-GATEWAY
+Switch(config)#ip default-gateway 192.168.100.1
+Switch(config)#exit
+
+
+Router(config)#service dhcp 
+Router(config)#ip dhcp pool uno
+Router(dhcp-config)#network 192.168.1.0 255.255.255.0
+Router(dhcp-config)#default-router 192.168.1.1
+Router(config)#ip dhcp excluded-address 192.168.1.1 192.168.1.10
+
+Switch(config)#interface vlan 1
+Switch(config-if)#ip helper-address 192.168.1.1
+
+
+
+/////////////////////////////////////////////////
+
+Router(config)#interface serial 0/0/0
+Router(config-if)#ip address 215.10.1.1 255.255.255.0
+Router(config-if)#encapsulation frame-relay 
+%LINEPROTO-5-UPDOWN: Line protocol on Interface Serial0/0/0, changed state to up
+Router(config-if)#frame-relay map ip 215.10.1.2 105 broadcast 
+Router(config-if)#frame-relay lmi-type ansi 
+%LINEPROTO-5-UPDOWN: Line protocol on Interface Serial0/0/0, changed state to down
+Router(config-if)#no frame-relay inverse-arp 
+
+
+
+Router(config)#interface Serial0/0/1
+Router(config-if)#ip address 215.10.1.2 255.255.255.0
+Router(config-if)#encapsulation frame-relay 
+%LINEPROTO-5-UPDOWN: Line protocol on Interface Serial0/0/1, changed state to up
+Router(config-if)#frame-relay map ip 215.10.1.1 501 broadcast 
+Router(config-if)#frame-relay lmi-type ansi 
+%LINEPROTO-5-UPDOWN: Line protocol on Interface Serial0/0/1, changed state to down
+Router(config-if)#no frame-relay inverse-arp
+
+
+
+/////////////////////////////////////
+Router(config)#Router eigrp 1
+Router(config-router)# network 10.1.1.0 /24
+Router(config-router)# nerwork 192.168.2.0 /24
+Router(config-router)# network 172.16.5.1 /24
+
+Router(config-router)# redistribute rip metric 2147483647 1 255 1 65535
+
+Router(config)#router rip
+Router(config-router)# version 2
+Router(config-router)# redistribute eigrp 1 metric 1
+Router(config-router)# network 80.5.1.1
+
+
+
+//////////////OSPF////////////////////////
+
+Router(config)#router ospf 1
+Router(config-router)#network 192.168.1.0 0.0.0.15 area 0
+
+
+
+////////////////////////ipv6/////////////////
+Router(config)#ipv6 unicast-routing 
+Router(config)#interface gigabitEthernet 0/1
+Router(config-if)#ipv6 address 2001:BD4:ABCD:1111::1/64
+Router(config-if)#no shutdown 
+Router(config-if)#exit
+
+Router(config)#ipv6 router ospf 100
+Router(config-rtr)#router-id 1.1.1.10
+
+Router(config)#interface gigabitEthernet 0/1
+Router(config-if)#ipv6 ospf 100 area 0
+
+//////
+
+
+
+
