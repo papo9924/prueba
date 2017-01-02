@@ -1,0 +1,223 @@
+//Configurar un switch
+	//Crear una Vlan
+	Switch(config)#vlan [número vlan]
+	Switch(config-vlan)#name [Nombre de la Vlan]
+	Switch(config-vlan)#exit
+
+	//Configurar Vlan
+	Switch(config)#interface vlan [número o nombre]
+	Switch(config-if)#ip address [IP] [subnet mask]
+	Switch(config-if)#no shutdown
+	Switch(config-if)#exit
+
+	//Configurar Interfaz con vlan
+	Switch(config)#interface [tipo interfaz] [número interfaz]
+	Switch(config-if)#switchport mode access
+	Switch(config-if)#switchport access vlan [número o nombre]
+	Switch(config-if)#exit
+
+	//Switch-Router
+	Switch>enable
+	Switch#configure terminal 
+	Switch(config)#interface [tipo interfaz] [número interfaz]
+	Switch(config-if)#switchport mode trunk
+	Switch(config-if)#exit
+
+	//IP Helper para ayudar a que el DHCP seleccione la ruta correcta
+	ip helper-address [ip gateway]
+
+//Configurar Router
+	//Router-Switch
+	Switch(config)#interface [tipo interfaz] [número interfaz]//Este número va con punto. Ej. interface GigabitEthernet 0/1.1
+	Switch(config-if)#encapsulation dot1q [número vlan]
+	Switch(config-if)#ip address [ip] [subnet mask]
+	Switch(config-if)#exit
+	Switch(config)#interface [tipo interfaz] [número interfaz]//Este número va sin punto, es para prender la interfaz completa.
+		//Ej. interface interface GigabitEthernet 0/1
+	Switch(config-if)#no shutdown
+	Switch(config-if)#exit
+
+	//Consola desde computadora
+	Router(config)#username [nombre de usuario] privilege [número de privilegio (3 comúnmente)] password [contraseña]
+	Router(config)#line console 0
+	Router(config-line)#login local
+	Router(config-line)#end
+
+	//Ruteo estático
+	Router(config)#ip route [Red destino] [subnet mask] [siguiente punto de acceso]
+		//Ej. ip route 192.168.100.0 255.255.255.0 172.16.100.1
+
+	//DHCP
+	Router(config)#service DHCP
+	Router(config)#ip dhcp pool [nombre pool]
+	Router(dhcp-config)#network [red] [subnet mask]
+	Router(dhcp-config)#default-router [gateway router]
+	Router(dhcp-config)#exit
+	Router(config)#ip dhcp excluded-address [ip inicial] [ip final] //Para un rango
+		//Ej.
+		//ip dhcp excluded-address 192.168.1.1 192.168.1.10
+	Router(config)#ip dhcp excluded-address [ip] //Solo para excluir una IP
+		//Ej.
+		//ip dhcp excluded-address 192.168.1.1
+
+	//Serial
+		//Carrier
+		Router(config)#interface serial [número serial]
+		Router(config-if)#ip address [ip] [subnet mask]
+		Router(config-if)#clock rate [número del clock (64000)]
+		Router(config-if)#no shutdown
+		//Cliente
+		Router(config)#interface serial [número serial]
+		Router(config-if)#ip address [ip] [subnet mask]
+		Router(config-if)#no shutdown
+
+	//PAP
+	Router>enable
+	Router#configure terminal
+	Router(config)#hostname [nombre host]
+	Router(config)#username [Nombre Router] password [contraseña]
+	Router(config)#interface [interfaz serial]
+	Router(config-if)#ip address [ip] [subnet mask]
+	Router(config-if)#clock rate [número del clock (64000)]//Si es el carrier, si no, se omite esta línea
+	Router(config-if)#encapsulation ppp
+	Router(config-if)#ppp authentication pap
+	Router(config-if)#ppp pap sent-username [username otro router] password [contraseña]
+	Router(config-if)#no shutdown
+
+	//CHAP
+	Router>enable
+	Router#configure terminal
+	Router(config)#username [Nombre Router] password [contraseña]//Del otro router
+	Router(config)#interface [interfaz serial]
+	Router(config-if)#ip address [ip] [subnet mask]
+	Router(config-if)#clock rate [número del clock (64000)]
+	Router(config-if)#encapsulation ppp
+	Router(config-if)#ppp authentication chap
+	Router(config-if)#no shutdown
+
+	//Ruteo RIP
+	Router(config)#route rip
+	Router(config-router)#version 2
+	Router(config-router)#network [redes que pasan por el router]
+		//Ej. 
+		//Router(config-router)#network 172.16.1.0
+		//Router(config-router)#network 192.168.10.0
+		//Router(config-router)#network 192.168.40.0
+		//Router(config-router)#network 172.16.10.0
+	Router(config-router)#exit
+
+	//Ruteo IGRP
+	Router>enable
+	Router#configure terminal
+	Router(config)#router igrp [número sistema autónomo]//Va entre 1 y 65536
+	Router(config-router)#network [redes que pasan por el router]
+
+	//Ruteo EIGRP
+	Router>enable
+	Router#configure terminal
+	Router(config)#router eigrp [número sistema autónomo]
+	Router(config-router)#network [redes que pasan por el router]
+	Router(config-router)#no auto-sumary
+
+	//Ruteo OSPF
+	Router>enable
+	Router#configure terminal
+	Router(config)#router ospf [número sistema autónomo]
+	Router(config-router)#network [redes que pasan por el router] [wildward] area [número de área]
+		//Ej.
+		//Router(config)#router ospf 100
+		//Router(config-router)#network 200.0.1.0 0.0.0.255 area 0
+		//Router(config-router)#network 10.0.1.0 0.0.0.255 area 0
+	Router(config-router)#exit
+
+	//Varios protocolos de ruteo
+	Router(config)#Router eigrp 1
+	Router(config-router)#network [red] [subnet mask]
+	Router(config-router)#redistribute rip metric 2147483647 1 255 1 65535//Son valores que nos tienen que dar o utilziar estos
+	Router(config-router)#exit
+	Router(config)#router rip
+	Router(config-router)#redistribute eigrp 1 metric 1
+	Router(config-router)#network [ip interfaz que lo va a utilizar]
+
+	//NAT
+	Router(config)#interface serial [número interfaz]
+	ip nat [inside/outside]
+		//Estático
+		Router(config)#ip nat inside source [ip inside] [ip aoutside]//ip de cuando es interna -> ip a la que se convierte
+		//Dinámico
+		Router(config)#ip nat pool [nombre pool nat] [ip inicial outside] [ip final outside]
+		Router(config)#access-list [número lista] permit [red] [wildcard]//inside
+		Router(config)#ip nat inside source list [número lista] pool [nombre pool] overload
+		Router(config)#interface [tipo interfaz] [número interfaz]//Interfaz interna; de donde sale el paquete
+		Router(config-if)#ip address [ip] [subnet mask]
+		Router(config-if)#ip nat inside
+		Router(config-if)#exit
+		Router(config)#interface [tipo interfaz] [número interfaz]//Interfaz externa; hacia donde va el paquete
+		Router(config-if)#ip address [ip] [subnet mask]
+		Router(config-if)#ip nat outside
+
+	//IPV6
+	Router(config)# ipv6 unicast-routing
+	Router(config)#interface [tipo interfaz] [número]
+	Router(config-if)#ipv6 address [ip]/[bits]
+	Router(config-if)#no shutdown
+
+	//OSPF con ipv6 y ID router
+	Router(config)#ipv6 router ospf [número sistema autónomo]
+	Router(config-rtr)#router-id [id]
+	Router(config-rtr)#exit
+	Router(config)#interface [tipo interfaz] [número interfaz]
+	Router(config-if)#ipv6 ospf [número SA] area [número área]
+	Router(config-if)#exit
+
+	//ACL
+		//ACL estándar
+		access-list [1-99] [permit/deny] [ip] [wildcard]
+		Router(config)#interface [tipo interfaz] [número interfaz]
+		Router(config-if)#ip access-group [número lista] [in/out]
+		Router(config-if)#exit
+			Ej: access-list 1 permit 192.168.1.0 0.0.0.255
+				interface GigabitEthernet0/0
+ 				ip address 192.168.1.1 255.255.255.0
+ 				ip access-group 1 in
+ 				ip access-group 2 out
+		//ACL extendido
+		access-list [número>99] [permit/deny] ip [comandos]...//Utilizar ayuda (?) para configurar extendido ya que tiene muchas variantes
+		Router(config)#interface [tipo interfaz] [número interfaz]
+		Router(config-if)#ip access-group [número lista] [in/out]
+
+	//Frame Relay
+		Router(config)#interface serial [número interfaz]
+		Router(config-if)#ip address [ip] [subnet mask]
+		Router(config-if)#encapsulation frame-relay
+		Router(config-if)#frame-relay map ip [ip] [número DLCI] broadcast
+		Router(config-if)#frame-relay lmi-type ansi
+		Router(config-if)#no frame-relay inverse-arp
+		//Continuar desde la interfaz de la nube
+		INTERFACE
+			Serial# 
+			DLCI:número Name:Nombre Router LMI: ANSI
+			Después presionar el botón "Add".
+		CONNECTIONS
+			Frame Relay
+				Serial# Nombre Router <-> Serial# Nombre otro Router. Después de poner estos valores, presionar "Add".
+
+
+
+
+
+	//CONFIGURAR DEFAULT-GATEWAY
+	Switch(config)#ip default-gateway 192.168.100.1
+	Switch(config)#exit
+
+
+	Router(config)#service dhcp 
+	Router(config)#ip dhcp pool uno
+	Router(dhcp-config)#network 192.168.1.0 255.255.255.0
+	Router(dhcp-config)#default-router 192.168.1.1
+	Router(config)#ip dhcp excluded-address 192.168.1.1 192.168.1.10
+
+	Switch(config)#interface vlan 1
+	Switch(config-if)#ip helper-address 192.168.1.1
+
+
